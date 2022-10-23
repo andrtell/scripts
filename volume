@@ -1,0 +1,49 @@
+#!/bin/env bash
+
+deps() {
+  if ! type -p $1 &> /dev/null 
+  then
+      echo "'$1' must be installed to run this script."
+      exit 126
+  fi
+}
+
+deps "pamixer"
+
+help() {
+  cat <<_EOF
+    manage sound volume
+
+    usage: 
+      
+      volume <command> [<arg> ...]
+
+    commands:
+
+      set   <volume>  set the sound volume (0-100)
+      get             get the sound volume
+
+      help          print help
+_EOF
+}
+
+(( $# < 1 )) && {
+    help
+    exit 0
+}
+
+case "$1" in
+      set)
+        pamixer --set-volume $2
+        ;;
+      get)
+        echo "$(pamixer --get-volume)%"
+        ;;
+      help)
+        help
+        ;;
+      *)
+        help
+        exit 126
+        ;;
+esac
