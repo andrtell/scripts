@@ -1,0 +1,110 @@
+#!/bin/env bash
+
+export PGBIN=/usr/lib/psql14/bin
+
+deps() {
+  if ! type -p $1 &> /dev/null
+  then
+      echo "'$1' must be installed to run this script."
+      exit 126
+  fi
+}
+
+deps "$PGBIN/pg_ctl"
+
+
+help() {
+    cat <<_EOF
+    wrapper around pg_ctl
+
+    you MUST run this script as the postgres user
+    
+    $ sudo cp db ~postgres
+    $ sudo chown postgres: ~postgres/db
+    $ sudo su - postgres
+
+    usage:
+
+      db <command> [<arg> ...]
+
+    commands:
+
+      init    <db-name>     create and init a new database
+      start   <db-name>     start a database
+      stop    <db-name>     stop a database
+
+      show    <db-name>     show database info
+
+      psql    [<arg> ...]   run the psql command
+
+      version               show postgres version
+_EOF
+}
+
+if [ ! "$(id -un)" == "postgres" ]; then
+    help
+    exit 126
+fi
+
+(( $# < 1 )) && {
+    help
+    exit 126
+}
+
+DB_DIR=~postgres/databases
+
+case "$1" in
+    init)
+        export PGDATA=$DB_DIR/$2
+        if [ -d "$PGDATA" ]; then
+            echo "$PGDATA directory already exist"
+            exit 126
+        fi
+        $PGBIN/pg_ctl -D $PGDATA initdb
+        ;;
+    start)
+        export PGDATA=$DB_DIR/$2
+        if [ ! -d "$PGDATA" ]; then
+            echo "$PGDATA directory does not exist"
+            exit 126
+        fi
+        $PGBIN/pg_ctl -D $PGDATA -l $PGDATA/logfile start
+        ;;
+    stop)
+        export PGDATA=$DB_DIR/$2
+        if [ ! -d "$PGDATA" ]; then
+            echo "$PGDATA directory does not exist"
+            exit 126
+        fi
+        $PGBIN/pg_ctl -D $PGDATA stop
+        ;;
+    show)
+        if [ "$2" = "all" ]; then
+            for dir in $DB_DIR/*/
+            do
+              echo -n "$(basename -- $dir): "
+              $PGBIN/pg_ctl -D $dir status | head -n 1
+            done
+            exit
+        fi
+        export PGDATA=$DB_DIR/$2
+        if [ ! -d "$PGDATA" ]; then
+            echo "$PGDATA directory does not exist"
+            exit 126
+        fi
+        $PGBIN/pg_ctl -D $PGDATA status
+        ;;
+    psql)
+        $PGBIN/psql "${@:2}"        
+        ;;
+    version)
+        $PGBIN/pg_ctl --version | awk '{$1=""}1'
+        ;;
+    help)
+        help
+        ;;
+    *)
+        help
+        exit 126
+        ;;
+esac
