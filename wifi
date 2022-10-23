@@ -19,7 +19,7 @@ help() {
 
     usage: 
       
-      wifictl <command> [<arg> ...]
+      wifi <command> [<arg> ...]
 
     commands:
 
