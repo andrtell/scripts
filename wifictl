@@ -1,0 +1,80 @@
+#!/bin/env bash
+
+deps() {
+  if ! type -p $1 &> /dev/null 
+  then
+      echo "'$1' must be installed to run this script."
+      exit 126
+  fi
+}
+
+deps "awk"
+deps "ip"
+deps "iwctl"
+deps "rfkill"
+
+help() {
+  cat <<_EOF
+    usage: 
+      
+      wifictl <command> [<arg> ...]
+
+    commands:
+
+      connect <ssid>    connect to a wifi
+      disconnect        disconnect from wifi
+      show              show wifi status
+
+      block             block wifi
+      unblock           unblock wifi
+
+      config            list config files
+
+      help              print help
+_EOF
+}
+
+NETWORK_DEVICE="$(ip -o -4 route show to default | awk '{print $5}')"
+NETWORK_DEVICE=${NETWORK_DEVICE:-"wlp0s20f3"}
+
+(( $# < 1 )) && {
+    help
+    exit 0
+}
+
+case "$1" in
+    connect)
+        (( $# != 2 )) && {
+            echo "must supply a wifi <ssid>"
+            exit 126
+        }
+        iwctl station $NETWORK_DEVICE connect $2
+        ;;
+    disconnect)
+        iwctl station $NETWORK_DEVICE disconnect
+        ;;
+    show)
+        iwctl station $NETWORK_DEVICE show
+        ;;
+    scan)
+        iwctl station $NETWORK_DEVICE scan
+        iwctl station $NETWORK_DEVICE get-networks
+        ;;
+    block)
+        sudo rfkill block wlan
+        ;;
+    unblock)
+        sudo rfkill unblock wlan
+        ;;
+    config)
+        ls -l /etc/iwd/main.conf
+        sudo bash -c 'ls -l /var/lib/iwd/*'
+        ;;
+    help)
+        help
+        ;;
+    *)
+        help
+        exit 126
+        ;;
+esac
