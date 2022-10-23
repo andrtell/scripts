@@ -1,0 +1,79 @@
+#!/bin/env bash
+
+WG_CONFIG_DIR="$HOME/store/mullvad/config"
+WG_CURRENT_CONFIG="$WG_CONFIG_DIR/current.conf"
+
+deps() {
+  if ! type -p $1 &> /dev/null 
+  then
+      echo "$1 is required to run this script"
+      exit 1
+  fi
+}
+
+deps "wg-quick"
+
+help() {
+    cat <<_EOF
+    manage vpn connection
+
+    usage:
+
+      vpn <command> [<arg> ...]
+
+    commands:
+
+      up      <country-code>  connect to vpn
+      down                    disconnect from vpn
+      show                    show vpn status
+
+      help                    print help
+_EOF
+}
+
+(( $# < 1 )) && {
+    help
+    exit 1
+}
+
+[[ ! -d $WG_CONFIG_DIR ]] && {
+  echo "$WG_CONFIG_DIR directory does not exist"
+  exit 126
+}
+
+case "$1" in
+    up)
+        [[ -f $WG_CURRENT_CONFIG ]] && {
+          echo "vpn is already up."
+          exit 1
+        }
+        WG_NEW_CONFIG=$(find $WG_CONFIG_DIR -name "$2*" -type f 2> /dev/null | sort -R | head -n 1)
+        [[ ! -f $WG_NEW_CONFIG ]] && {
+          echo "could not find any config file to use"
+          exit 126
+        }
+
+        ln -s $WG_NEW_CONFIG $WG_CURRENT_CONFIG
+        sudo wg-quick up $WG_CURRENT_CONFIG
+        exit 0
+        ;;
+    down)
+        if ! [[ -f $WG_CURRENT_CONFIG ]]
+        then
+          echo "vpn is not up."
+          exit 1
+        fi
+        sudo wg-quick down $WG_CURRENT_CONFIG
+        rm $WG_CURRENT_CONFIG
+        ;;
+    show)
+        sudo wg show
+        ;;
+    help)
+        help
+        ;;
+    *)
+        help
+        exit 1;
+        ;;
+esac
