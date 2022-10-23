@@ -2,6 +2,23 @@
 
 # Original source: https://github.com/lukrop/xbps-pkg/blob/master/pkg
 
+deps() {
+  if ! type -p $1 &> /dev/null 
+  then
+      echo "'$1' must be installed to run this script."
+      exit 126
+  fi
+}
+
+deps "xbps-alternatives"
+deps "xbps-install"
+deps "xbps-pkgdb"
+deps "xbps-query"
+deps "xbps-query"
+deps "xbps-reconfigure"
+deps "xbps-remove"
+deps "xbps-rindex"
+
 help() {
     cat <<_EOF
     a wrapper around the void xbps commands
