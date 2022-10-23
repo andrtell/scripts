@@ -1,0 +1,57 @@
+#!/bin/env bash
+
+deps() {
+  if ! type -p $1 &> /dev/null 
+  then
+      echo "'$1' must be installed to run this script."
+      exit 126
+  fi
+}
+
+deps "awk"
+deps "curl"
+deps "ip"
+
+help() {
+  cat <<_EOF
+    get network info
+
+    usage: 
+      
+      network <command> [<arg> ...]
+
+    commands:
+
+      ip           show host network ip
+      gateway      show host gateway ip
+      netmask      show host netmask ip
+      internet-ip  show host ip on the internet
+_EOF
+}
+
+(( $# < 1 )) && {
+    help
+    exit 0
+}
+
+case "$1" in
+      ip)
+        ip -o -4 route show to default | awk '{ print $9 }'
+        ;;
+      internet-ip)
+        curl icanhazip.com
+        ;;
+      gateway)
+        ip -o -4 route | grep 'default via' | cut -d' ' -f3 
+        ;;
+      netmask)
+        ip route | awk '{ print $1 }' | tail -n 1
+        ;;
+      help)
+        help
+        ;;
+      *)
+        help
+        exit 126
+        ;;
+esac
