@@ -1,0 +1,49 @@
+#!/bin/env bash
+
+deps() {
+  if ! type -p $1 &> /dev/null 
+  then
+      echo "'$1' must be installed to run this script."
+      exit 126
+  fi
+}
+
+deps "brightnessctl"
+
+help() {
+  cat <<_EOF
+    manage screen brightness (laptop)
+
+    usage: 
+      
+      brightness <command> [<arg> ...]
+
+    brightness:
+
+      set   <brightness>    set the brightness (0-100)
+      get                   get the brightness
+
+      help                  print help
+_EOF
+}
+
+(( $# < 1 )) && {
+    help
+    exit 0
+}
+
+case "$1" in
+      set)
+        sudo brightnessctl s "$2%"
+        ;;
+      get)
+        brightnessctl m
+        ;;
+      help)
+        help
+        ;;
+      *)
+        help
+        exit 126
+        ;;
+esac
