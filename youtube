@@ -1,0 +1,73 @@
+#!/bin/env bash
+
+deps() {
+  if ! type -p $1 &> /dev/null 
+  then
+      echo "'$1' must be installed to run this script."
+      exit 126
+  fi
+}
+
+deps "yt-dlp"
+deps "mpv"
+
+help() {
+    cat <<_EOF
+    download videos from youtube 
+
+    usage:
+
+      youtube <command> [<arg> ...]
+
+    commands:
+
+      download  <video-url>   download a youtube video
+      play      <video-url>   download a youtube video to and play it
+
+      help                    print help
+_EOF
+}
+
+(( $# < 1 )) && {
+    help
+    exit 126
+}
+
+case "$1" in
+    download)
+        (( $# != 2 )) && {
+          echo "must supply <video-url>"
+          exit 126;
+        }
+        yt-dlp \
+          --no-playlist \
+          --print=filename \
+          --no-simulate \
+          --restrict-filenames \
+          -o '%(fulltitle)s.%(ext)s' \
+          $2
+        ;;
+    play)
+        (( $# != 2 )) && {
+          echo "must supply <video-url>"
+          exit 126;
+        }
+        FILE=$(yt-dlp \
+          -q \
+          --no-playlist \
+          --print=filename \
+          --no-simulate \
+          --restrict-filenames \
+          -o '/tmp/%(fulltitle)s.%(ext)s' \
+          $2)
+        mpv $FILE
+        ;;
+    help)
+        help
+        exit 0
+        ;;
+    *)
+        help
+        exit 126;
+        ;;
+esac
