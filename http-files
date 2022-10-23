@@ -1,0 +1,32 @@
+#!/bin/env bash
+
+deps() {
+  if ! type -p $1 &> /dev/null 
+  then
+      echo "'$1' must be installed to run this script."
+      exit 126
+  fi
+}
+
+deps "python3"
+
+help() {
+    cat <<_EOF
+    serve files over http
+
+    usage:
+
+      http-files [<directory>] [<port>]
+_EOF
+}
+
+case "$1" in
+    help)
+        help
+        ;;
+    *)
+        DIRECTORY=${1:-"."}
+        PORT=${2:-"8000"}
+        python3 -m 'http.server' --directory="$DIRECTORY" $PORT
+        ;;
+esac
