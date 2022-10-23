@@ -1,0 +1,50 @@
+#!/bin/env bash
+
+sway-exec () {
+  setsid swaymsg -t command exec "$1";
+}
+
+menu=(\
+  books \
+  chromium \
+  code-oss \
+  discord \
+  firefox \
+  firefox-dev \
+  gimp \
+  hyper \
+  inkscape \
+  virtualbox \
+  tracks \
+)
+
+choice=$(for c in "${menu[@]}"; do printf "%s\n" $c; done | sort -ur | fzf --color=bw --info=hidden --pointer=" ")
+
+if [ $? = 0 ]; then
+    case "$choice" in
+        books)
+            if [ -z ${BOOKS_DIR+x} ]; then 
+              echo "env BOOKS_DIR is not set"
+              exit 126;
+            fi
+            FILE="$BOOKS_DIR/"$(cd $BOOKS_DIR && find . -maxdepth 2 -type f | fzf --color=bw --info=hidden --pointer=" ")
+            if [ -f "$FILE" ]; then
+                sway-exec "zathura '$FILE'";
+            fi
+            ;;
+        tracks)
+            if [ -z ${TRACKS_DIR+x} ]; then 
+              echo "env TRACKS_DIR is not set"
+              exit 126;
+            fi
+            TRACKS=$(ls $TRACKS_DIR/* | sort -R)
+            mpv --no-video --shuffle $TRACKS
+            ;;
+        virtualbox)
+            sway-exec "dbus-run-session VirtualBox"
+            ;;
+        *)
+            sway-exec "$choice"
+            ;;
+    esac
+fi
