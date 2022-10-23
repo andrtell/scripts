@@ -1,0 +1,119 @@
+#!/bin/env bash
+
+# Original source: https://github.com/lukrop/xbps-pkg/blob/master/pkg
+
+help() {
+    cat <<_EOF
+    a wrapper around the void xbps commands
+
+    usage:
+
+      pkg <command> [<arg> ...]
+
+    commands:
+
+      add      <package>              add package
+      remove   <package>              remove package
+      upgrade  <package>              upgrade package
+      upgrade                         upgrade ALL packages
+      files    <package>              list files in a package
+      info     <package>              show package info
+      
+      deps     <package>              list package dependencies
+      revdeps  <package>              list packages which depends on package
+      
+      hold     <package>              hold package
+      unhold   <package>              unhold package
+      
+      search   <package>              search for package
+      which    <file>                 show package with file
+      
+      installed                       list installed packages
+      orphans                         list orphaned packages
+      
+      clean                           remove obsolete packages from cache
+    
+      db            [<arg> ...]       run xbps-pkgdb
+      alternatives  [<arg> ...]       run xbps-alternatives
+      query         [<arg> ...]       run xbps-query
+      reconfigure   [<arg> ...]       run xbps-reconfigure
+      rindex        [<arg> ...]       run xbps-rindex
+      
+      help                            print help
+_EOF
+}
+
+(( $# < 1 )) && {
+    help
+    exit 126
+}
+
+case "$1" in
+    help)
+        help
+        ;;
+    installed)
+        shift; sudo xbps-query -l
+        ;;
+    add)
+        shift; sudo xbps-install -S "$@"
+        ;;
+    remove)
+        shift; sudo xbps-remove "$@"
+        ;;
+    search)
+        shift; xbps-query -Rs "$@"
+        ;;
+    upgrade)
+        shift; sudo xbps-install -Su "$@"
+        ;;
+    info)
+        shift; xbps-query "$@"
+        ;;
+    which)
+        shift; xbps-query -o "$@"
+        ;;
+    files)
+        shift; xbps-query -f "$@"
+        ;;
+    clean)
+        shift; sudo xbps-remove -O "$@"
+        ;;
+    hold)
+        shift; xbps-pkgdb -m hold "$@"
+        ;;
+    unhold)
+        shift; xbps-pkgdb -m unhold "$@"
+        ;;
+    deps)
+        shift; xbps-query -Rx "$@"
+        ;;
+    revdeps)
+        shift; xbps-query -RX "$@"
+        ;;
+    orphans)
+        shift; xbps-query -O "$@"
+        ;;
+    db)
+        shift; xbps-pkgdb "$@"
+        ;;
+    alternatives)
+        shift; xbps-alternatives "$@"
+        ;;
+    query)
+        shift; xbps-query -Rs "$@"
+        ;;
+    reconfigure)
+        shift; xbps-reconfigure "$@"
+        ;;
+    rindex)
+        shift; xbps-rindex "$@"
+        ;;
+    help)
+        help
+        ;;
+    *)
+        help
+        exit 126
+        ;;
+esac
