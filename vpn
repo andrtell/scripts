@@ -1,6 +1,10 @@
 #!/bin/env bash
 
-WG_CONFIG_DIR="$HOME/store/mullvad/config"
+if [ -z ${WG_CONFIG_DIR+x} ]; then 
+  echo "env WG_CONFIG_DIR is not set"
+  exit 126;
+fi
+
 WG_CURRENT_CONFIG="$WG_CONFIG_DIR/current.conf"
 
 deps() {
