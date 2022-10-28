@@ -1,0 +1,57 @@
+#!/bin/env bash
+
+deps() {
+  if ! type -p $1 &> /dev/null 
+  then
+      echo "'$1' must be installed to run this script."
+      exit 126
+  fi
+}
+
+deps "ecryptfs-setup-private"
+deps "ecryptfs-mount-private"
+deps "ecryptfs-umount-private"
+
+help() {
+  cat <<_EOF
+    Manage private ecryptfs
+
+    usage: 
+      
+      crypt  <command>
+
+    commands:
+
+      mount             mount private encrypted dir
+      umount            umount private encrypted dir
+
+      setup             setup encrypted folder
+
+      help              print help
+_EOF
+}
+
+(( $# < 1 )) && {
+    help
+    exit 126
+}
+
+case "$1" in
+    mount)
+        ecryptfs-mount-private
+        ;;
+    umount)
+        ecryptfs-umount-private
+        ;;
+    setup)
+        ecryptfs-setup-private
+        ;;
+    help)
+        help
+        ;;
+    *)
+        help
+        exit 126
+        ;;
+esac
+
