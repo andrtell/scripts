@@ -32,7 +32,7 @@ help() {
       amend                       amend last commit
       merge        <branch>       merge current branch with <branch>
       push                        push current branch
-      show                        show status
+      status                      show status
 
       help                        print help
 _EOF
@@ -132,7 +132,7 @@ case "$1" in
     WITH_BRANCH=$2
     git merge $WITH_BRANCH
     ;;
-  show)
+  status)
     git status
     ;;
   help)
