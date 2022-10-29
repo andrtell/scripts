@@ -58,15 +58,19 @@ case "$1" in
               -p 5432:5432 \
               --rm \
               --replace \
-              --name builder_db \
-              -v builder_db:/var/lib/postgresql/data \
+              --name db \
+              -v db:/var/lib/postgresql/data \
               -e POSTGRES_PASSWORD="postgres" \
               postgres:14-alpine
             ;;
           stop)
-            podman stop -i builder_db && podman rm -i builder_db
+            podman stop -i db && podman rm -i db
             ;;
-        esac
+          *)
+            help
+            exit 126
+            ;;
+       esac
         ;;
     podman)
         (( $# != 2 )) && {
@@ -79,6 +83,10 @@ case "$1" in
             ;;
           push)
             podman push registry.tell.nu/builder.tell.nu
+            ;;
+          *)
+            help
+            exit 126
             ;;
         esac
         ;;
