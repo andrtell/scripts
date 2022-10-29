@@ -23,19 +23,19 @@ help() {
 
     commands:
 
-      iex                     iex -S mix
+      iex                         iex -S mix
 
-      server                  iex -S mix phx.server
+      server                      iex -S mix phx.server
 
-      sql                     connect to database
+      sql                         connect to database
 
-      db          start       start database
-      db          stop        stop postgres
+      db          start           start database
+      db          stop            stop postgres
 
-      image       build       build image
-      image       push        push image to registry
+      image       build  <tag>    build image
+      image       push   <tag>    push image to registry
 
-      help                    print help
+      help                        print help
 _EOF
 }
 
@@ -81,16 +81,16 @@ case "$1" in
        esac
         ;;
     image)
-        (( $# < 2 )) && {
+        (( $# < 3 )) && {
             help
             exit 126
         }
         case "$2" in
           build)
-            podman build . -t registry.tell.nu/builder.tell.nu
+            podman build . -t registry.tell.nu/$3
             ;;
           push)
-            podman push registry.tell.nu/builder.tell.nu
+            podman push registry.tell.nu/$3
             ;;
           *)
             help
