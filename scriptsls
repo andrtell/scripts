@@ -1,0 +1,3 @@
+#!/bin/env bash
+SCRIPTS_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+ls -1 $SCRIPTS_DIR | grep -v -e 'README.md' -e 'LICENSE' | sort
