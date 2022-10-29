@@ -25,6 +25,7 @@ help() {
       ls                          list local branches
       new                         create a new branch (from main)
       clean                       remove all branches fully merged with main
+      main                        switch to main branch
       switch       <branch>       switch to <branch> (defaults to main)
       add                         add all unchanged or new files to the index
       commit                      commit
@@ -104,6 +105,10 @@ case "$1" in
     check_if_dirty_or_untracked
     BRANCH=${2:-main}
     git switch $BRANCH
+    ;;
+  main)
+    check_if_dirty_or_untracked
+    git switch main
     ;;
   add)
     git add .
