@@ -1,0 +1,155 @@
+#!/bin/env bash
+
+deps() {
+  if ! type -p $1 &> /dev/null 
+  then
+      echo "'$1' must be installed to run this script."
+      exit 126
+  fi
+}
+
+deps "git"
+
+help() {
+  cat <<_EOF
+    Wrapper around Git
+
+    usage: 
+      
+      got <command> [<arg> ...]
+
+    commands:
+
+      ------------
+      b for branch
+      ------------
+
+      b   ls                    list branches    
+      b   current               show current branch
+      b   new                   create new branch
+      b   rm                    delete branch
+      b   clean                 remove all merged branches
+      b   main                  switch to main
+      b   switch    <branch>    switch to <branch>
+
+      ------------
+      s for status
+      ------------
+
+      s                         show status  
+_EOF
+}
+
+GOT_SCRIPT="${BASH_SOURCE[0]}" 
+
+GOT_DIR=$HOME/.got
+
+got_init () {
+  mkdir -p $GOT_DIR
+  if [ ! -f $GOT_DIR/.bcount ]; then
+    echo '1' > $GOT_DIR/.bcount
+  fi
+}
+
+got_b_inc () {
+  local i=$(cat $GOT_DIR/.bcount) 
+  local j=$(expr $i + 1)
+  echo "$j" > $GOT_DIR/.bcount
+  echo "$i"
+}
+
+got_dirty () {
+  git diff HEAD
+}
+
+if [[ "$1" == "init" ]]; then
+  got_init
+fi
+
+if [[ ! -d $GOT_DIR ]]; then
+  echo "please run: got init"
+  exit 126
+fi
+
+(( $# < 1 )) && {
+    help
+    exit 126
+}
+
+case "$1" in
+    b)
+        (( $# != 2 )) && {
+            help
+            exit 126
+        }
+        case "$2" in
+          ls)
+            git branch --list
+          ;;
+          current)
+            git branch --show-current
+          ;;
+          new)
+            if [[ -z "$(git diff HEAD)" ]] && [[ -z "$(git status --short)" ]]; then
+              BRANCH="pr-$(got_b_inc)"
+              git branch $BRANCH
+              git switch $BRANCH
+            else
+              echo "working directory is DIRTY or has UNTRACKED files"
+              echo
+              git status
+            fi
+          ;;
+          rm)
+            BRANCH=$2
+            if [[ ! $(git branch -d $BRANCH 2> /dev/null) ]]; then
+              echo "branch '$BRANCH' is not fully merged"
+            fi
+            ;;
+          clean)
+            for branch in $(git branch --list | grep -v -e 'main'); do 
+              if [[ ! $(git branch -d $branch 2> /dev/null) ]]; then
+                echo "skipped branch '$branch' (not fully merged)"
+              fi
+            done  
+          ;;
+          main)
+             if [[ -z "$(git diff HEAD)" ]] && [[ -z "$(git status --short)" ]]; then
+              git switch main
+            else
+              echo "working directory is DIRTY or has UNTRACKED files"
+              echo
+              git status
+            fi
+            ;;
+          switch)
+            (( $# != 3 )) && {
+                help
+                exit 126
+            }
+            if [[ -z "$(git diff HEAD)" ]] && [[ -z "$(git status --short)" ]]; then
+              git switch $3
+            else
+              echo "working directory is DIRTY or has UNTRACKED files"
+              echo
+              git status
+            fi
+            ;;
+          *)
+            help
+            exit 126
+          ;;
+        esac
+        ;;
+    s)
+      git status
+      ;;
+    help)
+        help
+        ;;
+    *)
+        help
+        exit 126
+        ;;
+esac
+
