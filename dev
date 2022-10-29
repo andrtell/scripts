@@ -1,5 +1,6 @@
 #!/bin/env bash
 
+
 deps() {
   if ! type -p $1 &> /dev/null 
   then
@@ -10,6 +11,7 @@ deps() {
 
 deps "mix"
 deps "podman"
+deps "psql"
 
 help() {
   cat <<_EOF
@@ -26,6 +28,7 @@ help() {
 
       pg          start       start postgres
       pg          stop        stop postgres
+      pg          connect     stop postgres
 
       image       build       build image
       image       push        push image to registry
@@ -47,7 +50,7 @@ case "$1" in
         iex -S mix phx.server
         ;;
     pg | postgres)
-        (( $# != 2 )) && {
+        (( $# < 2 )) && {
             help
             exit 126
         }
@@ -66,14 +69,17 @@ case "$1" in
           stop)
             podman stop -i db && podman rm -i db
             ;;
+          connect)
+            $PGBIN/psql -h localhost -p 5432 --username postgres ${@:3}
+            ;;
           *)
             help
             exit 126
             ;;
        esac
         ;;
-    podman)
-        (( $# != 2 )) && {
+    image)
+        (( $# < 2 )) && {
             help
             exit 126
         }
