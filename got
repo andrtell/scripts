@@ -22,14 +22,18 @@ help() {
 
     commands:
 
-      ls                        list local branches
-      new                       create a new branch (from main)
-      clean                     remove all branches fully merged with main
-      switch       <branch>     switch to <branch> (defaults to main)
-      merge        <branch>     merge current branch with <branch>
-      push                      push current branch
+      ls                          list local branches
+      new                         create a new branch (from main)
+      clean                       remove all branches fully merged with main
+      switch       <branch>       switch to <branch> (defaults to main)
+      add                         add all unchanged or new files to the index
+      commit                      commit
+      amend                       amend last commit
+      merge        <branch>       merge current branch with <branch>
+      push                        push current branch
+      show                        show status
 
-      help                      print help
+      help                        print help
 _EOF
 }
 
@@ -91,8 +95,8 @@ case "$1" in
     ;;
   clean)
     for branch in $(git branch --format='%(refname:short)' | grep -v -e 'main'); do 
-      if [[ ! $(git branch -d $branch) ]]; then 
-        echo ""
+      if [[ ! $(git branch -d $branch 2> /dev/null) ]]; then 
+        echo "skipped: $branch"
       fi
     done  
     ;;
@@ -100,6 +104,15 @@ case "$1" in
     check_if_dirty_or_untracked
     BRANCH=${2:-main}
     git switch $BRANCH
+    ;;
+  add)
+    git add .
+    ;;
+  commit)
+    git commit
+    ;;
+  amend)
+    git commit --amend
     ;;
   push)
     check_if_dirty_or_untracked
@@ -113,6 +126,9 @@ case "$1" in
     check_if_dirty_or_untracked
     WITH_BRANCH=$2
     git merge $WITH_BRANCH
+    ;;
+  show)
+    git status
     ;;
   help)
     help
