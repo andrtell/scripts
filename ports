@@ -1,0 +1,46 @@
+#!/bin/env bash
+
+deps() {
+  if ! type -p $1 &> /dev/null 
+  then
+      echo "'$1' must be installed to run this script."
+      exit 126
+  fi
+}
+
+deps "ss"
+
+help() {
+  cat <<_EOF
+    Show information about TCP ports
+
+    usage: 
+      
+      ports <command> [<arg> ...]
+
+    commands:
+
+      listen      show tcp ports that a process is listening to
+
+      help        print help
+_EOF
+}
+
+(( $# < 1 )) && {
+    help
+    exit 126
+}
+
+case "$1" in
+    listen)
+        ss -nltp
+        ;;
+    help)
+        help
+        ;;
+    *)
+        help
+        exit 126
+        ;;
+esac
+
