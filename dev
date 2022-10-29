@@ -23,12 +23,14 @@ help() {
 
     commands:
 
-      server                  mix phx.server
-      iex                     iex -S mix phx.server
+      iex                     iex -S mix
 
-      pg          start       start postgres
-      pg          stop        stop postgres
-      pg          connect     stop postgres
+      server                  iex -S mix phx.server
+
+      sql                     connect to database
+
+      db          start       start database
+      db          stop        stop postgres
 
       image       build       build image
       image       push        push image to registry
@@ -43,13 +45,16 @@ _EOF
 }
 
 case "$1" in
-    server)
-        mix phx.server
-        ;;
     iex)
+        iex -S mix
+        ;;
+    server)
         iex -S mix phx.server
         ;;
-    pg | postgres)
+    sql)
+        psql postgresql://postgres:postgres@localhost:5432 ${@:3}
+        ;;
+    db)
         (( $# < 2 )) && {
             help
             exit 126
@@ -68,9 +73,6 @@ case "$1" in
             ;;
           stop)
             podman stop -i db && podman rm -i db
-            ;;
-          connect)
-            $PGBIN/psql -h localhost -p 5432 --username postgres ${@:3}
             ;;
           *)
             help
