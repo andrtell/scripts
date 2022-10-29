@@ -28,6 +28,7 @@ help() {
       main                        switch to main branch
       switch       <branch>       switch to <branch> (defaults to main)
       add                         add all unchanged or new files to the index
+      diff                        show diff
       commit                      commit
       amend                       amend last commit
       merge        <branch>       merge current branch with <branch>
@@ -109,6 +110,9 @@ case "$1" in
   main)
     check_if_dirty_or_untracked
     git switch main
+    ;;
+  diff)
+    git diff
     ;;
   add)
     git add .
