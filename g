@@ -14,11 +14,11 @@ deps "git"
 
 help() {
   cat <<_EOF
-    Wrapper around Git
+    A restricted subset of git
 
     usage: 
       
-      got <command> [<arg> ...]
+      g <command> [<arg> ...]
 
     commands:
 
