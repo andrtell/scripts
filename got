@@ -24,19 +24,24 @@ help() {
       b for branch
       ------------
 
-      b   ls                    list branches    
-      b   current               show current branch
-      b   new                   create new branch
-      b   rm                    delete branch
-      b   clean                 remove all merged branches
-      b   main                  switch to main
-      b   switch    <branch>    switch to <branch>
+      b   ls                        list branches    
+      b   new                       create new branch (always from main)
+      b   rm                        delete branch
+      b   clean                     remove all merged branches
+      b   switch        <branch>    switch to <branch> (defaults to 'main')
+      b   push                      push the current branch upstream
+
+      ------------
+      m for merge
+      ------------
+
+      m   <branch>                  merge current branch with <branch>   
 
       ------------
       s for status
       ------------
 
-      s                         show status  
+      s                             show status  
 _EOF
 }
 
@@ -58,8 +63,19 @@ got_b_inc () {
   echo "$i"
 }
 
-got_dirty () {
-  git diff HEAD
+got_cwd_is_dirty_or_untracked () {
+  if [[ -z "$(git diff HEAD)" ]] && [[ -z "$(git status --short)" ]]; then
+    return 1
+  fi
+  return 0
+}
+
+got_help_dirty_or_untracked () {
+  cat <<_EOF
+working directory is DIRTY or has UNTRACKED files
+
+_EOF
+  git status
 }
 
 if [[ "$1" == "init" ]]; then
@@ -78,7 +94,7 @@ fi
 
 case "$1" in
     b)
-        (( $# != 2 )) && {
+        (( $# < 2 )) && {
             help
             exit 126
         }
@@ -86,19 +102,15 @@ case "$1" in
           ls)
             git branch --list
           ;;
-          current)
-            git branch --show-current
-          ;;
           new)
-            if [[ -z "$(git diff HEAD)" ]] && [[ -z "$(git status --short)" ]]; then
-              BRANCH="pr-$(got_b_inc)"
-              git branch $BRANCH
-              git switch $BRANCH
-            else
-              echo "working directory is DIRTY or has UNTRACKED files"
-              echo
-              git status
+            if got_cwd_is_dirty_or_untracked; then
+              got_help_dirty_or_untracked
+              exit 126
             fi
+
+            BRANCH=${3:-"pr-$(got_b_inc)"}
+            git branch $BRANCH main
+            git switch $BRANCH
           ;;
           rm)
             BRANCH=$2
@@ -107,33 +119,28 @@ case "$1" in
             fi
             ;;
           clean)
-            for branch in $(git branch --list | grep -v -e 'main'); do 
+            for branch in $(git branch --format='%(refname:short)' | grep -v -e 'main'); do 
               if [[ ! $(git branch -d $branch 2> /dev/null) ]]; then
-                echo "skipped branch '$branch' (not fully merged)"
+                echo "branch '$branch' is not fully merged"
               fi
             done  
           ;;
-          main)
-             if [[ -z "$(git diff HEAD)" ]] && [[ -z "$(git status --short)" ]]; then
-              git switch main
-            else
-              echo "working directory is DIRTY or has UNTRACKED files"
-              echo
-              git status
-            fi
-            ;;
           switch)
-            (( $# != 3 )) && {
-                help
-                exit 126
-            }
-            if [[ -z "$(git diff HEAD)" ]] && [[ -z "$(git status --short)" ]]; then
-              git switch $3
-            else
-              echo "working directory is DIRTY or has UNTRACKED files"
-              echo
-              git status
+            if got_cwd_is_dirty_or_untracked; then
+              got_help_dirty_or_untracked
+              exit 126
             fi
+
+            BRANCH=${3:-main}
+            git switch $BRANCH
+            ;;
+          push)
+            if got_cwd_is_dirty_or_untracked; then
+              got_help_dirty_or_untracked
+              exit 126
+            fi
+              
+            git push --set-upstream origin $(git branch --show-current)
             ;;
           *)
             help
@@ -141,6 +148,18 @@ case "$1" in
           ;;
         esac
         ;;
+    m)
+      (( $# < 2 )) && {
+          help
+          exit 126
+      }
+      if got_cwd_is_dirty_or_untracked; then
+        got_help_dirty_or_untracked
+        exit 126
+      fi
+      BRANCH=$3
+      git merge $BRANCH
+      ;;
     s)
       git status
       ;;
