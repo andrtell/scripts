@@ -64,7 +64,7 @@ case "$1" in
           --console pty,target_type=serial \
           --cdrom $HOME/vm/isos/alpine-standard-3.16.3-x86_64.iso 
         ;;
-    rm)
+    remove|rm)
         (( $# != 2 )) && {
             help
             exit 126
@@ -99,7 +99,7 @@ case "$1" in
         }
         virsh destroy "$2"
         ;;
-    list)
+    list|ls)
         virsh list --all
         ;;
     view)
