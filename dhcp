@@ -1,0 +1,53 @@
+#!/bin/env bash
+
+EXT_IF="wlp0s20f3"
+LAN_IF="enp58s0u1u4"
+BRIDGE="br0"
+
+deps() {
+  if ! type -p $1 &> /dev/null 
+  then
+      echo "'$1' must be installed to run this script."
+      exit 126
+  fi
+}
+
+deps "ip"
+
+help() {
+  cat <<_EOF
+    Manage DHCP client
+
+    usage: 
+      
+      dhcp <command> [<arg> ...]
+
+    commands:
+
+      renew                     renew DHCP lease
+      dump                      dump DHCP leases
+
+      help                      print help
+_EOF
+}
+
+(( $# < 1 )) && {
+    help
+    exit 126
+}
+
+case "$1" in
+    renew)
+      dhcpcd --renew $BRIDGE $EXT_IF
+      ;;
+    dump)
+      dhcpcd --dumplease $BRIDGE $EXT_IF
+      ;;
+    help)
+        help
+        ;;
+    *)
+        help
+        exit 126
+        ;;
+esac
