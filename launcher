@@ -16,9 +16,18 @@ menu=(\
   inkscape \
   virtualbox \
   tracks \
+  tor \
+  virt-manager \
+  wireshark \
 )
 
-choice=$(for c in "${menu[@]}"; do printf "%s\n" $c; done | sort -ur | fzf --color=bw --info=hidden --pointer=" ")
+choice=$( \
+  for c in "${menu[@]}"; do printf "%s\n" $c; done | \
+  sort -ur | \
+  fzf --color=bw \
+      --info=hidden \
+      --pointer=" " \
+    )
 
 if [ $? = 0 ]; then
     case "$choice" in
@@ -27,7 +36,7 @@ if [ $? = 0 ]; then
               echo "env BOOKS_DIR is not set"
               exit 126;
             fi
-            FILE="$BOOKS_DIR/"$(cd $BOOKS_DIR && find . -maxdepth 2 -type f | fzf --color=bw --info=hidden --pointer=" ")
+            FILE="$BOOKS_DIR/"$(cd $BOOKS_DIR && find . -maxdepth 10 -type f | fzf --color=bw --info=hidden --pointer=" ")
             if [ -f "$FILE" ]; then
                 sway-exec "zathura '$FILE'";
             fi

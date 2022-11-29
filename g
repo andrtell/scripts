@@ -115,7 +115,8 @@ case "$1" in
     git diff
     ;;
   add)
-    git add .
+    shift;
+    git add "${@:-.}"
     ;;
   commit)
     git commit

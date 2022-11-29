@@ -1,0 +1,138 @@
+#!/bin/env bash
+
+deps() {
+  if ! type -p $1 &> /dev/null 
+  then
+      echo "'$1' must be installed to run this script."
+      exit 126
+  fi
+}
+
+deps "virt-install"
+deps "virt-clone"
+deps "virsh"
+
+help() {
+  cat <<_EOF
+    Create, start and stop VMs
+
+    usage: 
+      
+      vm <command> [<arg> ...]
+
+    commands:
+
+      create    <name>        create a VM with alpine linux
+      rm        <name>        remove inactive VM or make transient
+
+      clone     <old> <new>   clone a VM
+
+      start     <name>        start VM
+      stop      <name>        stop VM
+      kill      <name>        stop VM (press off button)
+
+      ifaddr    <name>        get network interface info
+
+      ssh       <name>        SSH as root
+
+      view                    open VM in virt-viewer
+
+      list                    list all VMs
+
+      help                    print help
+_EOF
+}
+
+(( $# < 1 )) && {
+    help
+    exit 126
+}
+
+case "$1" in
+    create|new)
+        (( $# != 2 )) && {
+            help
+            exit 126
+        }
+        virt-install \
+          --name "$2" \
+          --memory 2048 \
+          --vcpus 2 \
+          --bridge br0 \
+          --osinfo detect=on \
+          --disk path=$HOME/vm/images/alpine01.qcow2,size=8 \
+          --console pty,target_type=serial \
+          --cdrom $HOME/vm/isos/alpine-standard-3.16.3-x86_64.iso 
+        ;;
+    rm)
+        (( $# != 2 )) && {
+            help
+            exit 126
+        }
+        virsh undefine "$2" --remove-all-storage
+        ;;
+    clone)
+        (( $# != 3 )) && {
+            help
+            exit 126
+        }
+        virsh clone -o $1 -n $2 --auto-clone
+        ;;
+    start)
+        (( $# != 2 )) && {
+            help
+            exit 126
+        }
+        virsh start $2
+        ;;
+    stop)
+        (( $# != 2 )) && {
+            help
+            exit 126
+        }
+        virsh shutdown "$2"
+        ;;
+    kill)
+        (( $# != 2 )) && {
+            help
+            exit 126
+        }
+        virsh destroy "$2"
+        ;;
+    list)
+        virsh list --all
+        ;;
+    view)
+        (( $# != 2 )) && {
+            help
+            exit 126
+        }
+        virt-viewer "$2"
+        ;;
+    ip)
+        (( $# != 2 )) && {
+            help
+            exit 126
+        }
+        # apk add qemu-guest-agent
+        # rc-update add qemu-guest-agent
+        virsh domifaddr "$2" --source agent --interface eth0 | grep ipv4 | awk '{print $4}' | sed 's:/.*$::'
+        ;;
+    ssh)
+        (( $# != 2 )) && {
+            help
+            exit 126
+        }
+        set -e
+        IP=$(vm ip $2)
+        ssh root@$IP
+        ;;
+    help)
+        help
+        ;;
+    *)
+        help
+        exit 126
+        ;;
+esac
+

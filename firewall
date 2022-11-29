@@ -1,0 +1,109 @@
+#!/bin/env bash
+
+EXT_IF="wlp0s20f3"
+LAN_IF="enp58s0u1u4"
+
+deps() {
+  if ! type -p $1 &> /dev/null 
+  then
+      echo "'$1' must be installed to run this script."
+      exit 126
+  fi
+}
+
+deps "nft"
+
+help() {
+  cat <<_EOF
+    Manage firewall
+
+    usage: 
+      
+      firewall <command> [<arg> ...]
+
+    commands:
+      
+      list                  list all rules    
+
+      reset                 flush and restore firewall defaults
+
+      snat                  enable SNAT (masquerade)
+
+      dnat <to-ip> <port>   enable DNAT (port forwarding)
+
+      enable-ip-forwarding  enable IP forwarding
+
+      help                  print help
+_EOF
+}
+
+(( $# < 1 )) && {
+    help
+    exit 126
+}
+
+default() {
+  nft -f <(cat <<_EOF
+table filter {
+  chain input {
+    type filter hook input priority 0; policy accept;
+    }
+
+  chain forward {
+    type filter hook forward priority 0; policy accept;
+  }
+
+  chain output {
+    type filter hook output priority 0; policy accept;
+  }
+}
+
+table nat {
+  chain prerouting {
+    type nat hook prerouting priority 0; policy accept;
+  }
+
+  chain postrouting {
+    type nat hook postrouting priority 0; policy accept;
+  }
+
+  chain output {
+    type nat hook output priority 0; policy accept;
+  }
+}
+_EOF
+)
+}
+
+case "$1" in
+    list)
+        nft list ruleset
+        ;;
+    reset)
+        nft flush ruleset
+        default
+        ;;
+    snat)
+        nft add rule ip nat postrouting oif $EXT_IF masquerade
+        ;;
+    dnat)
+        (( $# != 3 )) && {
+          help
+          exit 126
+        }
+        TO_IP=$2
+        PORT=$3
+        nft add rule ip nat prerouting iif $EXT_IF tcp dport $PORT dnat to $TO_IP:$PORT 
+        ;;
+    enable-ip-forwarding)
+        echo 1 > /proc/sys/net/ipv4/ip_forward
+        ;;
+    help)
+        help
+        ;;
+    *)
+        help
+        exit 126
+        ;;
+esac
+

@@ -25,7 +25,10 @@ help() {
       ip           show host network ip
       gateway      show host gateway ip
       netmask      show host netmask ip
+
       internet-ip  show host ip on the internet
+
+      listen       show ports that are listening
 _EOF
 }
 
@@ -46,6 +49,9 @@ case "$1" in
         ;;
       netmask)
         ip route | awk '{ print $1 }' | tail -n 1
+        ;;
+      listen)
+        sudo ss -tunlp
         ;;
       help)
         help

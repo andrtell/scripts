@@ -46,11 +46,12 @@ NETWORK_DEVICE=${NETWORK_DEVICE:-"wlp0s20f3"}
 
 case "$1" in
     connect)
-        (( $# != 2 )) && {
+        (( $# < 2 )) && {
             echo "must supply a wifi <ssid>"
             exit 126
         }
-        iwctl station $NETWORK_DEVICE connect $2
+        shift;
+        iwctl station $NETWORK_DEVICE connect "$*"
         ;;
     disconnect)
         iwctl station $NETWORK_DEVICE disconnect
