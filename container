@@ -1,0 +1,91 @@
+#!/bin/env bash
+
+deps() {
+  if ! type -p $1 &> /dev/null 
+  then
+      echo "'$1' must be installed to run this script."
+      exit 126
+  fi
+}
+
+deps "podman"
+
+help() {
+  cat <<_EOF
+    Helper script for predefined containers
+
+    usage: 
+      
+      container <command> [<arg> ...]
+
+    commands:
+
+      start       <pre>    starts a container
+
+                              Predefined Containers
+                            ------------------------
+                              postgres
+
+      stop        <pre>    stops a container
+
+      build       <name>
+
+      help                 print help
+_EOF
+}
+
+(( $# < 1 )) && {
+    help
+    exit 126
+}
+
+case "$1" in
+    start)
+        (( $# < 2 )) && {
+            help
+            exit 126
+        }
+        case "$2" in
+          postgres|postgre)
+            podman run \
+              -d \
+              -p 5432:5432 \
+              --rm \
+              --replace \
+              --name postgres \
+              -v db:/var/lib/postgresql/data \
+              -e POSTGRES_PASSWORD="postgres" \
+              postgres:14-alpine
+            ;;
+          *)
+            help
+            exit 126
+            ;;
+       esac
+        ;;
+    stop)
+        (( $# < 2 )) && {
+            help
+            exit 126
+        }
+        case "$2" in
+          postgres|postgre)
+            podman stop -i postgres
+            ;;
+          *)
+            help
+            exit 126
+            ;;
+       esac
+       ;;
+    ls)
+      podman ps -a
+      ;;
+    help)
+        help
+        ;;
+    *)
+        help
+        exit 126
+        ;;
+esac

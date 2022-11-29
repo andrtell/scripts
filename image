@@ -1,0 +1,72 @@
+#!/bin/env bash
+
+REGISTRY=${REGISTRY:-"registry.tell.nu"}
+
+deps() {
+  if ! type -p $1 &> /dev/null 
+  then
+      echo "'$1' must be installed to run this script."
+      exit 126
+  fi
+}
+
+deps "podman"
+
+help() {
+  cat <<_EOF
+    Helper script for building images
+
+    usage: 
+      
+      image <cmd> [<arg> ...]
+
+    commands:
+
+      build       <tag>     build image in currend dir
+      push        <tag>     push image to repository
+      pull        <tag>     pull image from repository
+
+      registry              print registry
+
+      help                  print help
+_EOF
+}
+
+(( $# < 1 )) && {
+    help
+    exit 126
+}
+
+case "$1" in
+    build)
+        (( $# < 2)) && {
+            help
+            exit 126
+        }
+        podman build . -t $REGISTRY/$2
+        ;;
+    push)
+        (( $# < 2)) && {
+            help
+            exit 126
+        }
+        podman push $REGISTRY/$2
+        ;;
+    pull)
+        (( $# < 2)) && {
+            help
+            exit 126
+        }
+        podman pull $REGISTRY/$2
+        ;;
+    registry)
+        echo $REGISTRY
+        ;;
+    help)
+        help
+        ;;
+    *)
+        help
+        exit 126
+        ;;
+esac

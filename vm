@@ -22,7 +22,12 @@ help() {
 
     commands:
 
-      create    <name>        create a VM with alpine linux
+      create    <os> <name>   create a new VM
+                              
+                              os
+                              ----------
+                              alpine
+
       rm        <name>        remove inactive VM or make transient
 
       clone     <old> <new>   clone a VM
@@ -50,19 +55,27 @@ _EOF
 
 case "$1" in
     create|new)
-        (( $# != 2 )) && {
+        (( $# != 3 )) && {
             help
             exit 126
         }
-        virt-install \
-          --name "$2" \
-          --memory 2048 \
-          --vcpus 2 \
-          --bridge br0 \
-          --osinfo detect=on \
-          --disk path=$HOME/vm/images/alpine01.qcow2,size=8 \
-          --console pty,target_type=serial \
-          --cdrom $HOME/vm/isos/alpine-standard-3.16.3-x86_64.iso 
+        case "$2" in
+          alpine)
+            virt-install \
+              --name "$3" \
+              --memory 2048 \
+              --vcpus 2 \
+              --bridge br0 \
+              --osinfo detect=on \
+              --disk path=$HOME/vm/images/$3.qcow2,size=8 \
+              --console pty,target_type=serial \
+              --cdrom $HOME/vm/isos/alpine-standard-3.16.3-x86_64.iso 
+            ;;
+          *)
+            help
+            exit 126
+          ;;
+          esac
         ;;
     remove|rm)
         (( $# != 2 )) && {

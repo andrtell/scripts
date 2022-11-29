@@ -70,7 +70,7 @@ case "$1" in
         sudo wg-quick down $WG_CURRENT_CONFIG
         rm $WG_CURRENT_CONFIG
         ;;
-    show)
+    show|status)
         sudo wg show
         ;;
     help)

@@ -11,6 +11,7 @@ deps() {
 deps "awk"
 deps "curl"
 deps "ip"
+deps "ss"
 
 help() {
   cat <<_EOF
@@ -29,6 +30,8 @@ help() {
       internet-ip  show host ip on the internet
 
       listen       show ports that are listening
+
+      scan         scan network using nmap
 _EOF
 }
 
@@ -52,6 +55,9 @@ case "$1" in
         ;;
       listen)
         sudo ss -tunlp
+        ;;
+      scan)
+        nmap -sn $(network netmask)
         ;;
       help)
         help
