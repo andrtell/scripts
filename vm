@@ -76,7 +76,7 @@ case "$1" in
             help
             exit 126
         }
-        virsh clone -o $1 -n $2 --auto-clone
+        virt-clone -o $2 -n $3 --auto-clone
         ;;
     start)
         (( $# != 2 )) && {
