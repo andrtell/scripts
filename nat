@@ -1,0 +1,93 @@
+#!/bin/env bash
+
+EXT_IF="wlp0s20f3"
+LAN_IF="enp58s0u1u4"
+
+deps() {
+  if ! type -p $1 &> /dev/null 
+  then
+      echo "'$1' must be installed to run this script."
+      exit 126
+  fi
+}
+
+deps "nft"
+
+help() {
+  cat <<_EOF
+    Manage NAT
+
+    usage: 
+      
+      nat <command> [<arg> ...]
+
+    commands:
+
+      list                      list NAT table
+      create                    create empty NAT table
+      flush                     flush NAT table
+      
+      source                    add rule for SNAT
+
+      dest    <port> <ip>       add rule for DNAT
+
+      help                      print help
+_EOF
+}
+
+(( $# < 1 )) && {
+    help
+    exit 126
+}
+
+case "$1" in
+    list)
+      nft list table nat
+      ;;
+    flush)
+      nft flush table nat
+      ;;
+    create)
+      nft -f <(cat <<_EOF
+table nat {
+  chain prerouting {
+    type nat hook prerouting priority 0; policy accept;
+  }
+
+  chain postrouting {
+    type nat hook postrouting priority 0; policy accept;
+  }
+
+  chain output {
+    type nat hook output priority 0; policy accept;
+  }
+}
+_EOF
+)
+    ;;
+    source|src)
+      (( $# != 1 )) && {
+        help
+        exit 126
+      }
+      # enable ip forwarding
+      echo 1 > /proc/sys/net/ipv4/ip_forward
+      nft add rule ip nat postrouting oif $EXT_IF masquerade
+      ;;
+    dest|destination)
+      (( $# != 3 )) && {
+        help
+        exit 126
+      }
+      PORT=$2
+      FORWARD_TO_IP=$3
+      nft add rule ip nat prerouting iif $EXT_IF tcp dport $PORT dnat to $FORWARD_TO_IP:$PORT 
+      ;;
+    help)
+        help
+        ;;
+    *)
+        help
+        exit 126
+        ;;
+esac
