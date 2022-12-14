@@ -36,7 +36,7 @@ help() {
       stop      <name>        stop VM
       kill      <name>        stop VM (press off button)
 
-      ifaddr    <name>        get network interface info
+      ip        <name>        get network interface info
 
       ssh       <name>        SSH as root
 

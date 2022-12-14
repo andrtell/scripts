@@ -34,6 +34,10 @@ help() {
       merge        <branch>       merge current branch with <branch>
       push                        push current branch
       status                      show status
+      
+      log                         show log
+
+      1                           show one line log
 
       help                        print help
 _EOF
@@ -139,6 +143,12 @@ case "$1" in
     ;;
   status)
     git status
+    ;;
+  log)
+    git log
+    ;;
+  1)
+    git log --oneline
     ;;
   help)
     help
